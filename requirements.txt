@@ -1,0 +1,11 @@
+httpx>=0.27
+anthropic>=0.40
+rich>=13.7
+python-dotenv>=1.0
+pyyaml>=6.0
+pytest>=8.0
+
+# Optional, used by the LoRA stand-in for real zero-shot inference.
+# If not installed, lora_stub_client.py falls back to a naive keyword baseline.
+# transformers>=4.44
+# torch>=2.2

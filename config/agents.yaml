@@ -1,0 +1,9 @@
+instructions: >
+  Given an incoming payments/billing message, decide which downstream agent
+  should handle it. Choose exactly one agent from the candidates below.
+
+agents:
+  billing_support: "Invoicing questions, subscription charges, statement or billing explanation requests"
+  payment_failure: "Declined or failed payments, retry issues, payment method errors"
+  fraud_risk: "Suspicious transactions, unauthorized charges, chargeback or fraud reports"
+  refunds: "Refund requests, cancellations, reversal of a charge"

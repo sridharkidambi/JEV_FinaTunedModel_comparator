@@ -1,0 +1,24 @@
+[project]
+name = "jev-compare"
+version = "0.1.0"
+description = "Compare JEV, a LoRA-payments-SLM stand-in, and OpenRouter on payments/billing routing decisions."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.27",
+    "openai>=1.0",
+    "rich>=13.7",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+lora = [
+    "transformers>=4.44",
+    "torch>=2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
