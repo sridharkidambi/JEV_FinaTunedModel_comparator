@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "JEV Compare — Architecture",
+    "subtitle": "Comparing JEV, a LoRA-payments-SLM stand-in, and OpenRouter on routing decisions",
+    "output": "jev-compare.architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "request-path", "label": "Request path", "focus": ["config", "cli", "harness", "jev_client", "lora_client", "openrouter_client"], "note": "Follow one input from the CLI through the shared taxonomy config into the concurrent harness." },
+      { "id": "external-calls", "label": "External calls", "focus": ["jev_client", "jev_api", "lora_client", "hf_model", "openrouter_client", "openrouter_api"], "note": "Each router adapter calls its own backing model, hosted or local." },
+      { "id": "results", "label": "Results out", "focus": ["harness", "cli", "output"], "note": "Aggregated RouteResults are rendered as a table and optionally saved as JSON." }
+    ]
+  },
+  "components": [
+    { "id": "config", "type": "external", "label": "agents.yaml", "sublabel": "shared agent taxonomy", "pos": [40, 120], "size": [140, 60] },
+    { "id": "cli", "type": "frontend", "label": "CLI", "sublabel": "jev_compare.cli", "pos": [40, 300], "size": [140, 60] },
+    { "id": "output", "type": "frontend", "label": "Results", "sublabel": "rich table / --save json", "pos": [40, 480], "size": [140, 60] },
+    { "id": "harness", "type": "backend", "label": "Comparison Harness", "sublabel": "ThreadPoolExecutor", "pos": [280, 300], "size": [150, 60] },
+    { "id": "jev_client", "type": "backend", "label": "Jev Client", "sublabel": "TypeSafe adapter", "pos": [520, 150], "size": [140, 60] },
+    { "id": "lora_client", "type": "backend", "label": "LoRA Stub Client", "sublabel": "zero-shot NLI adapter", "pos": [520, 300], "size": [140, 60] },
+    { "id": "openrouter_client", "type": "backend", "label": "OpenRouter Client", "sublabel": "tool-call adapter", "pos": [520, 450], "size": [140, 60] },
+    { "id": "jev_api", "type": "external", "label": "TypeSafe Jev API", "sublabel": "System One model", "pos": [760, 150], "size": [150, 60] },
+    { "id": "hf_model", "type": "external", "label": "HF NLI Model", "sublabel": "valhalla/distilbart-mnli (local)", "pos": [760, 300], "size": [150, 60] },
+    { "id": "openrouter_api", "type": "external", "label": "OpenRouter API", "sublabel": "openai/gpt-5", "pos": [760, 450], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "jev_compare (Python package)", "wraps": ["config", "cli", "output", "harness", "jev_client", "lora_client", "openrouter_client"], "pad": 24 },
+    { "kind": "region", "label": "Third-party models", "wraps": ["jev_api", "hf_model", "openrouter_api"], "pad": 20 }
+  ],
+  "connections": [
+    { "id": "config-to-cli", "from": "config", "to": "cli", "label": "load agents + instructions", "labelDy": 24 },
+    { "id": "cli-to-harness", "from": "cli", "to": "harness", "label": "run(text)", "variant": "emphasis" },
+    { "id": "harness-to-jev", "from": "harness", "to": "jev_client", "label": "route()", "fromSide": "top", "toSide": "left" },
+    { "id": "harness-to-lora", "from": "harness", "to": "lora_client", "label": "route()" },
+    { "id": "harness-to-openrouter", "from": "harness", "to": "openrouter_client", "label": "route()", "fromSide": "bottom", "toSide": "left" },
+    { "id": "jev-to-api", "from": "jev_client", "to": "jev_api", "label": "POST /v1/systemone" },
+    { "id": "lora-to-model", "from": "lora_client", "to": "hf_model", "label": "zero-shot classify", "variant": "dashed" },
+    { "id": "openrouter-to-api", "from": "openrouter_client", "to": "openrouter_api", "label": "tool-call completion", "labelDy": -24 },
+    { "id": "cli-to-output", "from": "cli", "to": "output", "label": "render + save", "labelDy": 24 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Shared taxonomy", "items": ["All three systems score the same agent names/descriptions from agents.yaml", "Keeps the comparison apples-to-apples"] },
+    { "dot": "emerald", "title": "Concurrent harness", "items": ["ComparisonHarness fans out to all clients on a thread pool", "Each router times its own call, so latency reflects real per-system cost"] },
+    { "dot": "amber", "title": "Graceful degradation", "items": ["LoRA stub falls back to a keyword prior if transformers/torch is missing", "Missing API keys surface as a RouteResult error instead of a crash"] }
+  ]
+}

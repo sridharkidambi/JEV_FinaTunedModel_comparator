@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "JEV vs LoRA-stub vs OpenRouter — Model Comparison",
+    "subtitle": "One input, three routing models, compared on latency and confidence",
+    "output": "jev-compare.model.html",
+    "viewBox": [980, 680],
+    "column_fit": "spread",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "dispatch", "label": "Concurrent dispatch", "focus": ["user", "cli", "harness", "jev", "lora", "openrouter"], "note": "The harness sends the same text to all three models at once." },
+      { "id": "responses", "label": "Model responses", "focus": ["harness", "jev", "lora", "openrouter"], "note": "Each model returns at its own pace: fast hosted API, local inference, slower LLM call." },
+      { "id": "report", "label": "Aggregate + report", "focus": ["harness", "cli", "user"], "note": "Results are collected once all three finish and rendered as one comparison table." }
+    ]
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "Operator", "sublabel": "input" },
+    { "id": "cli", "type": "frontend", "label": "CLI", "sublabel": "jev_compare.cli" },
+    { "id": "harness", "type": "backend", "label": "Harness", "sublabel": "ThreadPoolExecutor" },
+    { "id": "jev", "type": "external", "label": "JEV", "sublabel": "TypeSafe System One" },
+    { "id": "lora", "type": "backend", "label": "LoRA Stub", "sublabel": "local zero-shot NLI" },
+    { "id": "openrouter", "type": "external", "label": "OpenRouter", "sublabel": "openai/gpt-5" }
+  ],
+  "segments": [
+    { "from": 205, "to": 315, "label": "Dispatch" },
+    { "from": 325, "to": 470, "label": "Model responses" },
+    { "from": 480, "to": 540, "label": "Aggregate + report" }
+  ],
+  "messages": [
+    { "id": "operator-run", "from": "user", "to": "cli", "y": 160, "label": "run(text)", "variant": "default" },
+    { "id": "cli-dispatch", "from": "cli", "to": "harness", "y": 190, "label": "run(text, agents, instructions)", "variant": "emphasis" },
+    { "id": "harness-to-jev", "from": "harness", "to": "jev", "y": 220, "label": "route(text)", "variant": "default" },
+    { "id": "harness-to-lora", "from": "harness", "to": "lora", "y": 260, "label": "route(text)", "variant": "default" },
+    { "id": "harness-to-openrouter", "from": "harness", "to": "openrouter", "y": 300, "label": "route(text)", "variant": "default" },
+    { "id": "jev-result", "from": "jev", "to": "harness", "y": 340, "label": "RouteResult (fastest)", "variant": "return", "note": "Hosted API, calibrated probabilities" },
+    { "id": "openrouter-result", "from": "openrouter", "to": "harness", "y": 400, "label": "RouteResult (LLM tool call)", "variant": "return" },
+    { "id": "lora-result", "from": "lora", "to": "harness", "y": 460, "label": "RouteResult (local inference)", "variant": "return", "note": "Falls back to keyword prior if transformers is unavailable" },
+    { "id": "harness-aggregate", "from": "harness", "to": "cli", "y": 500, "label": "3x RouteResult", "variant": "return" },
+    { "id": "cli-report", "from": "cli", "to": "user", "y": 530, "label": "comparison table", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "cli", "from": 185, "to": 535, "type": "frontend" },
+    { "participant": "harness", "from": 215, "to": 505, "type": "backend" },
+    { "participant": "jev", "from": 215, "to": 345, "type": "external" },
+    { "participant": "lora", "from": 255, "to": 465, "type": "backend" },
+    { "participant": "openrouter", "from": 295, "to": 405, "type": "external" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Same input, three systems", "items": ["Identical text and agent taxonomy sent to JEV, the LoRA stand-in, and OpenRouter", "All three return the same RouteResult shape: chosen agent, probabilities, confidence"] },
+    { "dot": "emerald", "title": "Latency tells a story", "items": ["JEV's hosted System One call returns fastest", "OpenRouter pays for a full LLM completion", "The local NLI model has its own inference cost with no network round trip"] },
+    { "dot": "amber", "title": "Fair comparison, honest failure", "items": ["A missing API key or unavailable model surfaces as an error field, not a crash", "The harness still reports all three rows even when one system fails"] }
+  ]
+}
