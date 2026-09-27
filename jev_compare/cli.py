@@ -7,6 +7,7 @@ from .agents_config import load_agents_config
 from .clients.openrouter_client import OpenRouterClient
 from .clients.jev_client import JevClient
 from .clients.lora_stub_client import LoraStubClient
+from .clients.laya_client import LayaClient
 from .harness import ComparisonHarness
 from .schemas import RouteResult
 
@@ -49,12 +50,13 @@ def main(argv: list[str] | None = None):
         pass
 
     parser = argparse.ArgumentParser(
-        description="Compare JEV, a LoRA-payments-SLM stand-in, and OpenRouter on a payments/billing routing decision."
+        description="Compare JEV, a LoRA-payments-SLM stand-in, a local Laya (ModernBERT-large) encoder, and OpenRouter on a payments/billing routing decision."
     )
     parser.add_argument("text", nargs="?", help="Input text. If omitted, reads from stdin.")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG), help="Path to the shared agent taxonomy YAML.")
     parser.add_argument("--save", help="Path to save full results as JSON.")
     parser.add_argument("--openrouter-model", default="openai/gpt-5")
+    parser.add_argument("--laya-model", default=None, help="Laya checkpoint to load (default: convaiinnovations/laya).")
     args = parser.parse_args(argv)
 
     text = args.text or sys.stdin.read()
@@ -66,6 +68,7 @@ def main(argv: list[str] | None = None):
     clients = {
         "jev": JevClient(),
         "lora_stub": LoraStubClient(),
+        "laya": LayaClient(model_name=args.laya_model),
         "openrouter": OpenRouterClient(model=args.openrouter_model),
     }
     harness = ComparisonHarness(clients, agents, instructions)

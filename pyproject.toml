@@ -1,7 +1,7 @@
 [project]
 name = "jev-compare"
 version = "0.1.0"
-description = "Compare JEV, a LoRA-payments-SLM stand-in, and OpenRouter on payments/billing routing decisions."
+description = "Compare JEV, a LoRA-payments-SLM stand-in, a local Laya (ModernBERT-large) encoder, and OpenRouter on payments/billing routing decisions."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -16,6 +16,9 @@ dependencies = [
 lora = [
     "transformers>=4.44",
     "torch>=2.2",
+]
+laya = [
+    "laya",
 ]
 
 [dependency-groups]

@@ -2,17 +2,9 @@ import os
 import time
 
 from ..schemas import RouteResult
+from ._keyword_fallback import keyword_baseline
 
 _DEFAULT_MODEL = os.environ.get("LORA_STUB_MODEL", "valhalla/distilbart-mnli-12-3")
-
-# Rough keyword prior used only when transformers/torch aren't installed, so
-# the harness still produces a result instead of hard-failing.
-_KEYWORD_MAP = {
-    "billing_support": ["invoice", "statement", "bill", "subscription"],
-    "payment_failure": ["declined", "failed", "failure", "error", "retry"],
-    "fraud_risk": ["fraud", "unauthorized", "suspicious", "chargeback", "dispute"],
-    "refunds": ["refund", "cancel", "reverse", "money back"],
-}
 
 
 class LoraStubClient:
@@ -71,7 +63,7 @@ class LoraStubClient:
                 latency_ms = (time.perf_counter() - start) * 1000
                 return RouteResult(system="lora_stub", chosen_agent=None, latency_ms=latency_ms, error=str(e))
 
-        probs = _keyword_baseline(text, agent_names)
+        probs = keyword_baseline(text, agent_names)
         latency_ms = (time.perf_counter() - start) * 1000
         chosen = max(probs, key=probs.get)
         return RouteResult(
@@ -82,18 +74,3 @@ class LoraStubClient:
             latency_ms=latency_ms,
             error=f"transformers unavailable, used keyword fallback ({self._load_error})",
         )
-
-
-def _keyword_baseline(text: str, agent_names: list[str]) -> dict[str, float]:
-    text_lower = text.lower()
-    scores = {name: 0 for name in agent_names}
-    for name in agent_names:
-        for kw in _KEYWORD_MAP.get(name, []):
-            if kw in text_lower:
-                scores[name] += 1
-
-    total = sum(scores.values())
-    if total == 0:
-        n = len(agent_names)
-        return {name: 1 / n for name in agent_names}
-    return {name: score / total for name, score in scores.items()}
